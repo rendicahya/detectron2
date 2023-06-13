@@ -13,7 +13,7 @@ from detectron2.utils.visualizer import ColorMode, Visualizer
 
 
 class VisualizationDemo(object):
-    def __init__(self, cfg, instance_mode=ColorMode.IMAGE, parallel=False):
+    def __init__(self, cfg, instance_mode=ColorMode.IMAGE, parallel=False, person_only=False):
         """
         Args:
             cfg (CfgNode):
@@ -34,6 +34,8 @@ class VisualizationDemo(object):
         else:
             self.predictor = DefaultPredictor(cfg)
 
+        self.person_only = person_only
+        self.person_class = self.metadata.thing_classes.index('person')
     def run_on_image(self, image):
         """
         Args:
@@ -90,20 +92,29 @@ class VisualizationDemo(object):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             if "panoptic_seg" in predictions:
                 panoptic_seg, segments_info = predictions["panoptic_seg"]
+                data = segments_info
                 vis_frame = video_visualizer.draw_panoptic_seg_predictions(
                     frame, panoptic_seg.to(self.cpu_device), segments_info
                 )
             elif "instances" in predictions:
-                predictions = predictions["instances"].to(self.cpu_device)
+                data = predictions["instances"]
+
+                if self.person_only:
+                    
+                    data = data[data.pred_classes == self.person_class]
+                    predictions["instances"] = data
+
+                predictions = data.to(self.cpu_device)
                 vis_frame = video_visualizer.draw_instance_predictions(frame, predictions)
             elif "sem_seg" in predictions:
+                data = predictions["sem_seg"]
                 vis_frame = video_visualizer.draw_sem_seg(
                     frame, predictions["sem_seg"].argmax(dim=0).to(self.cpu_device)
                 )
 
             # Converts Matplotlib RGB format to OpenCV BGR format
             vis_frame = cv2.cvtColor(vis_frame.get_image(), cv2.COLOR_RGB2BGR)
-            return vis_frame
+            return vis_frame, data
 
         frame_gen = self._frame_from_video(video)
         if self.parallel:
