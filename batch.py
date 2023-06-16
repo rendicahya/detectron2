@@ -16,7 +16,6 @@ from tqdm import tqdm
 
 
 def setup_cfg(args):
-    # load config from file and command-line arguments
     cfg = get_cfg()
 
     # To use demo for Panoptic-DeepLab, please uncomment the following two lines.
@@ -25,12 +24,12 @@ def setup_cfg(args):
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
 
-    # Set score_threshold for builtin models
     cfg.MODEL.RETINANET.SCORE_THRESH_TEST = args.confidence_threshold
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
     cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = (
         args.confidence_threshold
     )
+
     cfg.freeze()
 
     return cfg
@@ -45,6 +44,18 @@ def get_parser():
         default="configs/quick_schedules/mask_rcnn_R_50_FPN_inference_acc_test.yaml",
         metavar="FILE",
         help="path to config file",
+    )
+    parser.add_argument(
+        "--file-limit",
+        type=int,
+        default=-1,
+        help="The number of videos to process.",
+    )
+    parser.add_argument(
+        "--person-only",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Whether or not to obtain only person objects.",
     )
     parser.add_argument(
         "--confidence-threshold",
@@ -87,19 +98,19 @@ if __name__ == "__main__":
 
     args = get_parser().parse_args()
     cfg = setup_cfg(args)
-    demo = VisualizationDemo(cfg, parallel=True, person_only=True)
+    demo = VisualizationDemo(cfg, parallel=True, person_only=args.person_only)
 
     config_file = args.config_file.split("/")[-1].split(".")[0]
     input_path = Path(args.input)
     output_path = input_path.parent / f"{input_path.name}-{config_file}"
     n_files = utils.count_files(input_path)
+    file_limit = args.file_limit
     count = 0
-    video_limit = 1
 
     for file in input_path.rglob(f"*.mp4"):
         count += 1
 
-        print(f"{count}/{video_limit if video_limit != -1 else n_files}")
+        print(f"{count}/{file_limit if file_limit != -1 else n_files}")
 
         video = cv2.VideoCapture(str(file))
         width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -124,5 +135,5 @@ if __name__ == "__main__":
             str(output_video_path), logger=None, audio=False
         )
 
-        if count == video_limit:
+        if count == file_limit:
             break
