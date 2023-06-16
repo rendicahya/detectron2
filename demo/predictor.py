@@ -100,7 +100,6 @@ class VisualizationDemo(object):
                 data = predictions["instances"]
 
                 if self.person_only:
-                    
                     data = data[data.pred_classes == self.person_class]
                     predictions["instances"] = data
 

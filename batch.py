@@ -7,10 +7,12 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import torch
 import utils
 from demo.predictor import VisualizationDemo
 from detectron2.config import get_cfg
 from moviepy.editor import ImageSequenceClip
+from PIL import Image
 from tqdm import tqdm
 
 
@@ -58,6 +60,12 @@ def get_parser():
         action=argparse.BooleanOptionalAction,
         default=True,
         help="Whether to process in parallel.",
+    )
+    parser.add_argument(
+        "--save-mask",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Whether to save masks.",
     )
     parser.add_argument(
         "--person-only",
@@ -134,8 +142,24 @@ if __name__ == "__main__":
         output_frames = []
         viz = demo.run_on_video(video)
 
-        for output_frame, instances in tqdm(viz, total=num_frames):
+        if args.save_mask:
+            mask_output_path = (
+                output_path.parent
+                / (output_path.name + "-mask")
+                / relative_path.with_suffix("")
+            )
+
+            mask_output_path.mkdir(exist_ok=True, parents=True)
+
+        for i, (output_frame, instances) in enumerate(tqdm(viz, total=num_frames)):
             output_frame = cv2.cvtColor(output_frame, cv2.COLOR_BGR2RGB)
+
+            if args.save_mask:
+                mask = torch.any(instances.pred_masks, dim=0).cpu().numpy() * 255
+
+                Image.fromarray(mask.astype(np.uint8), mode="L").save(
+                    mask_output_path / f"{i:04}.png"
+                )
 
             output_frames.append(output_frame)
 
