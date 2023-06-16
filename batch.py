@@ -10,7 +10,6 @@ import numpy as np
 import utils
 from demo.predictor import VisualizationDemo
 from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog
 from moviepy.editor import ImageSequenceClip
 from tqdm import tqdm
 
