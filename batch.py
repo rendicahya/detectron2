@@ -39,6 +39,7 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Detectron2 demo for builtin configs")
 
     parser.add_argument("input", type=str, help="The video input directory.", nargs="?")
+    parser.add_argument("output", type=str, help="The video output directory.", nargs="?")
     parser.add_argument(
         "--config-file",
         default="configs/quick_schedules/mask_rcnn_R_50_FPN_inference_acc_test.yaml",
@@ -108,7 +109,7 @@ if __name__ == "__main__":
 
     config_file = args.config_file.split("/")[-1].split(".")[0]
     input_path = Path(args.input)
-    output_path = input_path.parent / f"{input_path.name}-{config_file}"
+    output_path = Path(args.output)
     n_files = utils.count_files(input_path)
     file_limit = args.file_limit
     count = 0
