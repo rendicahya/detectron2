@@ -52,10 +52,16 @@ def get_parser():
         help="The number of videos to process.",
     )
     parser.add_argument(
+        "--parallel",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Whether to process in parallel.",
+    )
+    parser.add_argument(
         "--person-only",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="Whether or not to obtain only person objects.",
+        help="Whether to obtain only person objects.",
     )
     parser.add_argument(
         "--confidence-threshold",
@@ -98,7 +104,7 @@ if __name__ == "__main__":
 
     args = get_parser().parse_args()
     cfg = setup_cfg(args)
-    demo = VisualizationDemo(cfg, parallel=True, person_only=args.person_only)
+    demo = VisualizationDemo(cfg, parallel=args.parallel, person_only=args.person_only)
 
     config_file = args.config_file.split("/")[-1].split(".")[0]
     input_path = Path(args.input)
