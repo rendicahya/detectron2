@@ -115,6 +115,7 @@ if __name__ == "__main__":
     args = get_parser().parse_args()
     cfg = setup_cfg(args)
     demo = VisualizationDemo(cfg, parallel=args.parallel, person_only=args.person_only)
+    exit()
 
     config_file = args.config_file.split("/")[-1].split(".")[0]
     input_path = Path(args.input)
